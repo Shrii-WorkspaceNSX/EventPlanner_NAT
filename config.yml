@@ -1,0 +1,68 @@
+# NeMo Agent Toolkit Configuration for Event Planning
+
+# LLM Configuration - NVIDIA NIMs
+llms:
+  event_llm:
+    _type: nim
+    api_key: "${NVIDIA_API_KEY}"
+    base_url: "${NIM_BASE_URL}"
+    model_name: "meta/llama-3.1-8b-instruct"
+    temperature: 0.7
+    max_tokens: 2048
+
+# Function definitions - these reference the registered functions
+functions:
+  generate_event_themes:
+    _type: generate_event_themes
+  
+  refine_event_plan:
+    _type: refine_event_plan
+  
+  fetch_moderators:
+    _type: fetch_moderators
+  
+  fetch_participants:
+    _type: fetch_participants
+
+  ask_user_event_details:
+    _type: interactive.HumanPromptText
+
+
+# Main workflow - using react_agent for interactive planning
+workflow:
+  _type: react_agent
+  tool_names:
+    - ask_user_event_details
+    - generate_event_themes
+    - refine_event_plan
+    - fetch_moderators
+    - fetch_participants
+  llm_name: event_llm
+  verbose: true
+  system_prompt: |
+    You are an expert event planning assistant with access to the following tools:
+    
+    {{tools}}
+    
+    The tools you may use are: {{tool_names}}
+    
+    You must respond in one of the following strict formats:
+    
+    If you want to call a tool:
+      Thought: <Your reasoning here>
+      Action: <tool_name>
+      Action Input: <Valid JSON object for the tool>
+    
+    If you need human input:
+      Thought: <Your reasoning here>
+      Action: ask_user_event_details
+      Action Input: {{"prompt": "<Ask the user something in a simple JSON field>"}}
+    
+    If you have a final answer:
+      Thought: <Your reasoning that concludes>
+      Final Answer: <The answer to the user>
+    
+    Be professional and guide users step by step.
+  parse_agent_response_max_retries: 3
+  retry_agent_response_parsing_errors: true
+  use_native_tool_calling: true
