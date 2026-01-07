@@ -18,6 +18,9 @@ from nat.cli.register_workflow import register_function
 from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 
+from nat.builder.context import Context
+from nat.data_models.interactive import HumanPromptText,HumanResponseText
+
 # Load environment variables
 load_dotenv()
 
@@ -132,6 +135,19 @@ db_manager = DatabaseManager()
 
 # ==================== Input/Output Schema Classes ====================
 
+
+# ---------------------For Human I/O Schema Classes---------------------
+class AskUserInput(BaseModel):
+    """Input for asking user a question."""
+    prompt: str = Field(description="The question to ask the user")
+    required: bool = Field(default=True, description="Whether response is required")
+
+class AskUserOutput(BaseModel):
+    """Output from user response."""
+    response: str = Field(description="User's response to the question")
+
+# ---------------------------------------------------------------------
+
 class EventIdeaInput(BaseModel):
     """Input schema for theme generation."""
     event_idea: str = Field(description="The base idea or concept for the event")
@@ -186,6 +202,10 @@ class HumanPromptTextInput(BaseModel):
 # ==================== Function Configuration Classes ====================
 
 
+class AskUserConfig(FunctionBaseConfig, name="ask_user"):
+    """Configuration for asking user for input."""
+    pass
+
 class GenerateEventThemesConfig(FunctionBaseConfig, name="generate_event_themes"):
     """Configuration for event theme generation function."""
     pass
@@ -207,6 +227,38 @@ class FetchParticipantsConfig(FunctionBaseConfig, name="fetch_participants"):
 
 
 # ==================== Registered Functions with FunctionInfo Pattern ====================
+
+@register_function(config_type=AskUserConfig)
+async def ask_user(config: AskUserConfig, builder: Builder):
+    """
+    Ask user for input interactively using NeMo's UserInteractionManager.
+    This pauses workflow execution and waits for user input.
+    """
+    
+    async def _ask_user(input_data: AskUserInput) -> AskUserOutput:
+        """Inner function that prompts user and waits for response."""
+        # Get UserInteractionManager from context
+        context = Context.get()
+        user_input_manager = context.user_interaction_manager
+        
+        # Create the interactive prompt
+        human_prompt = HumanPromptText(
+            text=input_data.prompt,
+            required=input_data.required,
+            placeholder="Enter your response here"
+        )
+        
+        # Pause and wait for user input
+        response = await user_input_manager.prompt_user_input(human_prompt)
+        
+        # Extract the text response
+        assert isinstance(response.content, HumanResponseText)
+        return AskUserOutput(response=response.content.text)
+    
+    yield FunctionInfo.from_fn(
+        _ask_user,
+        description="Ask the user a question and wait for their response. Pauses workflow execution."
+    )
 
 @register_function(config_type=GenerateEventThemesConfig)
 async def generate_event_themes(

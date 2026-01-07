@@ -9,6 +9,7 @@ from .event_planning_nemo import (
     refine_event_plan,
     fetch_moderators,
     fetch_participants,
+    ask_user,
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "refine_event_plan",
     "fetch_moderators",
     "fetch_participants",
+    "ask_user",
 ]

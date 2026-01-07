@@ -14,6 +14,7 @@ llms:
 functions:
   generate_event_themes:
     _type: generate_event_themes
+    description: "Generate 5 Event Themes from the event input. Prompt the user to choose one among the 5 themes."
   
   refine_event_plan:
     _type: refine_event_plan
@@ -24,15 +25,16 @@ functions:
   fetch_participants:
     _type: fetch_participants
 
-  ask_user_event_details:
-    _type: interactive.HumanPromptText
+  ask_user:
+    _type: ask_user
+    description: "A tool to ask the user for details that can help in the thought process. Make sure to ask with relevant questions to the user."
 
 
 # Main workflow - using react_agent for interactive planning
 workflow:
   _type: react_agent
   tool_names:
-    - ask_user_event_details
+    - ask_user
     - generate_event_themes
     - refine_event_plan
     - fetch_moderators
@@ -40,29 +42,48 @@ workflow:
   llm_name: event_llm
   verbose: true
   system_prompt: |
-    You are an expert event planning assistant with access to the following tools:
+    You are an expert event planning assistant.
+    
+    Available tools: {{tool_names}}
     
     {{tools}}
     
-    The tools you may use are: {{tool_names}}
+    You MUST use this EXACT format for EVERY response:
     
-    You must respond in one of the following strict formats:
+    Thought: [Your reasoning about what to do next]
+    Action: [The tool name from available tools]
+    Action Input: [Valid JSON input for the tool]
     
-    If you want to call a tool:
-      Thought: <Your reasoning here>
-      Action: <tool_name>
-      Action Input: <Valid JSON object for the tool>
+    After you receive an Observation, continue with:
+    Thought: [Your reasoning about the observation]
+    Action: [Next tool to use]
+    Action Input: [JSON input]
     
-    If you need human input:
-      Thought: <Your reasoning here>
-      Action: ask_user_event_details
-      Action Input: {{"prompt": "<Ask the user something in a simple JSON field>"}}
+    When you have completed the event plan:
+    Thought: I have all information and created the final event plan
+    Final Answer: [The complete event plan as a one-pager]
     
-    If you have a final answer:
-      Thought: <Your reasoning that concludes>
-      Final Answer: <The answer to the user>
+    WORKFLOW:
+    1. generate_event_themes with user's idea
+    2. Present all 5 themes numbered
+    3. ask_user: "Which theme? (1-5)"
+    4. ask_user for: start_date, end_date, start_time, end_time, location, event_type
+    5. fetch_moderators
+    6. fetch_participants  
+    7. refine_event_plan with ALL details
+    8. Return final plan
     
-    Be professional and guide users step by step.
+    RULES:
+    - NEVER skip "Action:" line
+    - ALWAYS use JSON for Action Input
+    - ask_user format: {{"prompt": "question"}}
+    - generate_event_themes format: {{"event_idea": "idea"}}
+    
+    EXAMPLE:
+    Thought: User wants event themes for football tournament
+    Action: generate_event_themes
+    Action Input: {{"event_idea": "football tournament 5-a-side"}}
   parse_agent_response_max_retries: 3
   retry_agent_response_parsing_errors: true
   use_native_tool_calling: true
+  max_iterations: 5
