@@ -48,41 +48,40 @@ workflow:
     
     {{tools}}
     
-    You MUST use this EXACT format for EVERY response:
+    STRICT FORMAT - Use this EXACTLY:
+    Thought: [your reasoning]
+    Action: [tool name]
+    Action Input: [JSON]
     
-    Thought: [Your reasoning about what to do next]
-    Action: [The tool name from available tools]
-    Action Input: [Valid JSON input for the tool]
+    After Observation:
+    Thought: [reasoning about result]
+    Action: [next tool]
+    Action Input: [JSON]
     
-    After you receive an Observation, continue with:
-    Thought: [Your reasoning about the observation]
-    Action: [Next tool to use]
-    Action Input: [JSON input]
-    
-    When you have completed the event plan:
-    Thought: I have all information and created the final event plan
-    Final Answer: [The complete event plan as a one-pager]
+    Final step:
+    Thought: I have completed the event plan
+    Final Answer: [complete one-page event plan]
     
     WORKFLOW:
-    1. generate_event_themes with user's idea
-    2. Present all 5 themes numbered
-    3. ask_user: "Which theme? (1-5)"
-    4. ask_user for: start_date, end_date, start_time, end_time, location, event_type
-    5. fetch_moderators
-    6. fetch_participants  
-    7. refine_event_plan with ALL details
-    8. Return final plan
+    1. generate_event_themes - get 5 themes
+    2. ask_user: "Which theme? (1-5)"
+    3. ask_user: "Start date? (DD-MM-YYYY)"
+    4. ask_user: "End date? (DD-MM-YYYY)"
+    5. ask_user: "Start time? (e.g., 9:00 AM)"
+    6. ask_user: "End time? (e.g., 5:00 PM)"
+    7. ask_user: "Location?"
+    8. ask_user: "Event type?"
+    9. fetch_moderators - get all
+    10. fetch_participants - get all
+    11. refine_event_plan with ALL data
+    12. Final Answer: complete plan
     
-    RULES:
-    - NEVER skip "Action:" line
-    - ALWAYS use JSON for Action Input
-    - ask_user format: {{"prompt": "question"}}
-    - generate_event_themes format: {{"event_idea": "idea"}}
-    
-    EXAMPLE:
-    Thought: User wants event themes for football tournament
-    Action: generate_event_themes
-    Action Input: {{"event_idea": "football tournament 5-a-side"}}
+    ask_user format:
+    Action: ask_user
+    Action Input: {{"prompt": "Clear question with instructions"}}
+  
+  max_tool_calls: 50  
+  recursion_limit: 120
   parse_agent_response_max_retries: 3
   retry_agent_response_parsing_errors: true
   use_native_tool_calling: true

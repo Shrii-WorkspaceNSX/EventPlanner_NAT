@@ -65,14 +65,14 @@ class DatabaseManager:
             if moderator_names:
                 placeholders = ','.join('?' * len(moderator_names))
                 query = f"""
-                    SELECT name, city, description, email, phone, expertise
+                    SELECT name,city,description,email,phone,expertise
                     FROM moderators 
                     WHERE name IN ({placeholders})
                 """
                 cursor.execute(query, moderator_names)
             else:
                 query = """
-                    SELECT name, city, description, email, phone, expertise
+                    SELECT name,city,description,email,phone,expertise 
                     FROM moderators
                 """
                 cursor.execute(query)
@@ -101,14 +101,14 @@ class DatabaseManager:
             if participant_names:
                 placeholders = ','.join('?' * len(participant_names))
                 query = f"""
-                    SELECT name, email, company, role, phone
+                    SELECT name,email,company,role,phone
                     FROM participants 
                     WHERE name IN ({placeholders})
                 """
                 params = participant_names
             else:
                 query = """
-                    SELECT name, email, company, role, phone
+                    SELECT id,name,email,company,role,phone
                     FROM participants
                 """
                 params = []
@@ -230,35 +230,44 @@ class FetchParticipantsConfig(FunctionBaseConfig, name="fetch_participants"):
 
 @register_function(config_type=AskUserConfig)
 async def ask_user(config: AskUserConfig, builder: Builder):
-    """
-    Ask user for input interactively using NeMo's UserInteractionManager.
-    This pauses workflow execution and waits for user input.
-    """
+    """Ask user for input with clear question display."""
     
     async def _ask_user(input_data: AskUserInput) -> AskUserOutput:
         """Inner function that prompts user and waits for response."""
-        # Get UserInteractionManager from context
         context = Context.get()
         user_input_manager = context.user_interaction_manager
         
-        # Create the interactive prompt
+        # Get the question
+        question = input_data.prompt.strip()
+        
+        # Log to console
+        print("\n" + "="*70)
+        print(f"❓ QUESTION: {question}")
+        print("="*70)
+        
+         
         human_prompt = HumanPromptText(
-            text=input_data.prompt,
+            text=question,  # Main text
             required=input_data.required,
-            placeholder="Enter your response here"
+            placeholder=question,  
         )
         
-        # Pause and wait for user input
+        # Wait for response
         response = await user_input_manager.prompt_user_input(human_prompt)
         
-        # Extract the text response
         assert isinstance(response.content, HumanResponseText)
-        return AskUserOutput(response=response.content.text)
+        user_response = response.content.text.strip()
+        
+        print(f"✅ ANSWER: {user_response}")
+        print("="*70 + "\n")
+        
+        return AskUserOutput(response=user_response)
     
     yield FunctionInfo.from_fn(
         _ask_user,
-        description="Ask the user a question and wait for their response. Pauses workflow execution."
+        description="Ask the user a question and wait for their response"
     )
+
 
 @register_function(config_type=GenerateEventThemesConfig)
 async def generate_event_themes(
