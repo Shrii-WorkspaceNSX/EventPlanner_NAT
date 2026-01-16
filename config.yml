@@ -74,7 +74,7 @@ workflow:
     9. fetch_moderators - get all
     10. fetch_participants - get all
     11. refine_event_plan with ALL data
-    12. Final Answer: complete plan
+    12. Final Answer: complete plan with an Event Agenda
     
     ask_user format:
     Action: ask_user

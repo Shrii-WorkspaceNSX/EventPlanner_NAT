@@ -31,7 +31,7 @@ class Settings:
         # NVIDIA NIM Configuration
         self.nim_base_url = os.getenv("NIM_BASE_URL", "http://localhost:8202")
         self.nim_api_key = os.getenv("NVIDIA_API_KEY", "")
-        self.model_name = os.getenv("MODEL_NAME", "meta/llama3.1-8b-instruct")
+        self.model_name = os.getenv("MODEL_NAME", "meta/llama-3.1-8b-instruct")
         
         # Database Configuration
         self.db_path = os.getenv("DB_PATH", "event_planning.db")
